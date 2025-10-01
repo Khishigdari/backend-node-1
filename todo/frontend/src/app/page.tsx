@@ -1,5 +1,6 @@
 "use client";
 
+import { PenLine } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Home() {
@@ -16,18 +17,22 @@ export default function Home() {
   // }, []);
 
   const [newTask, setNewTask] = useState("");
-  const [tasks, setTasks] = useState<{ id: string; name: string }[]>([]);
+  const [tasks, setTasks] = useState<
+    { id: string; name: string; isDone: boolean }[]
+  >([]);
 
   async function createNewTask() {
-    await fetch("http://localhost:3000/tasks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ name: newTask }),
-    });
-    loadTasks();
-    setNewTask("");
+    if (newTask) {
+      await fetch("http://localhost:3000/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newTask }),
+      });
+      loadTasks();
+      setNewTask("");
+    }
   }
 
   function loadTasks() {
@@ -38,9 +43,42 @@ export default function Home() {
       });
   }
 
-  function deleteTask(index: number) {
-    const newTodos = tasks.filter((e, i) => index !== i);
-    setTasks(newTodos);
+  async function deleteTask(id: string) {
+    // const newTodos = tasks.filter((e, i) => index !== i);
+    // setTasks(newTodos);
+    if (confirm("Delete task?")) {
+      await fetch(`http://localhost:3000/tasks/${id}`, {
+        method: "DELETE",
+      });
+      loadTasks();
+    }
+  }
+
+  async function editTask(task: { id: string; name: string }) {
+    const newName = prompt("Edit", task.name);
+    if (newName) {
+      await fetch(`http://localhost:3000/tasks/${task.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name: newName }),
+      });
+      loadTasks();
+    }
+  }
+
+  async function checkTask(id: string, isDone: boolean) {
+    if (!isDone) {
+      await fetch(`http://localhost:3000/check/tasks/${id}`, {
+        method: "PUT",
+        // headers: {
+        //   "Content-Type": "application/json",
+        // },
+        // body: JSON.stringify({ isDone: isDone }),
+      });
+      loadTasks();
+    }
   }
 
   useEffect(() => {
@@ -50,14 +88,16 @@ export default function Home() {
   console.log(tasks, "tasks");
 
   return (
-    <div className="m-8">
-      <div className="flex">
-        <input
-          className="input mr-4 rounded-md"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-        />
-        {newTask === "" ? (
+    <div className="flex justify-center mt-50">
+      <div className="card p-4 border border-gray-200 shadow-gray-500 shadow-lg">
+        <p className="flex justify-center font-bold ">To-Do</p>
+        <div className="flex mt-4">
+          <input
+            className="input mr-4 rounded-md w-100"
+            value={newTask}
+            onChange={(e) => setNewTask(e.target.value)}
+          />
+          {/* {newTask === "" ? (
           <button className="btn btn-neutral rounded-md">Add</button>
         ) : (
           <button
@@ -66,28 +106,48 @@ export default function Home() {
           >
             Add
           </button>
-        )}
-      </div>
-      {tasks.map((task, index) => (
-        <div
-          className="card p-4 border border-base-300 mt-4 w-100 hover:bg-base-200 hover:duration-[1s]"
-          key={task.id}
-        >
-          <div className="flex justify-between items-center">
-            <div className="flex gap-3">
-              <input className="checkbox" type="checkbox" />
-              <p>{task.name}</p>
-            </div>
-
-            <button
-              className="btn btn-outline btn-error rounded-md w-18"
-              onClick={() => deleteTask(index)}
-            >
-              Delete
-            </button>
-          </div>
+        )} */}
+          <button
+            disabled={!newTask}
+            className="btn btn-neutral rounded-md"
+            onClick={createNewTask}
+          >
+            Add
+          </button>
         </div>
-      ))}
+        {tasks.map((task, index) => (
+          <div
+            className="card p-4 border border-base-300 mt-4 w-119 hover:bg-base-200 hover:duration-[1s]"
+            key={task.id}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex gap-3 items-center">
+                <input
+                  className="checkbox w-5 h-5 rounded-md"
+                  type="checkbox"
+                  checked={task.isDone}
+                  onChange={() => checkTask(task.id, task.isDone)}
+                />
+                <p>{task.name}</p>
+              </div>
+              <div className="flex gap-1">
+                <button
+                  className="btn btn-ghost btn-xs rounded-md hover:duration-[0.3s]"
+                  onClick={() => editTask(task)}
+                >
+                  <PenLine className="w-4 h-4" />
+                </button>
+                <button
+                  className="btn btn-outline btn-error rounded-md btn-xs text-[12px] hover:duration-[0.3s]"
+                  onClick={() => deleteTask(task.id)}
+                >
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
