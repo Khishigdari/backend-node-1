@@ -12,7 +12,7 @@ const port = 3000;
 //   { id: 1, name: "iMac" },
 // ];
 
-const tasks = [
+let tasks = [
   { id: "1", name: "Task-1" },
   { id: "2", name: "Task-2" },
   { id: "3", name: "Task-3" },
@@ -38,6 +38,12 @@ app.post("/tasks", (req: Request, res: Response) => {
   // res.send([]);
   const id = nanoid();
   const { name } = req.body;
+
+  if (!name) {
+    res.status(400).send({ message: "name is required" });
+    return;
+  }
+
   tasks.unshift({ id, name });
   // res.send("POST tasks");
   res.status(201).send({ id });
@@ -46,13 +52,33 @@ app.post("/tasks", (req: Request, res: Response) => {
 app.delete("/tasks/:id", (req: Request, res: Response) => {
   const id = req.params.id;
   // fetch all tasks
-  res.send("DELETE tasks");
+  console.log({ id });
+  const newTasks = tasks.filter((task) => task.id !== id);
+  tasks = newTasks;
+  res.sendStatus(204); //No Content
 });
 
 app.put("/tasks/:id", (req: Request, res: Response) => {
   const id = req.params.id;
+  const { name } = req.body;
+
+  const index = tasks.findIndex((task) => task.id === id);
+  tasks[index].name = name;
   // fetch all tasks
-  res.send("PUT tasks");
+  res.sendStatus(204); //No Content
+});
+
+app.put("/check/tasks/:id", (req: Request, res: Response) => {
+  const id = req.params.id;
+  // let { isDone } = req.body;
+
+  let checked = tasks.map((task) => id === task.id);
+  const isDone = true;
+  // checked = isDone;
+
+  // tasks[checked].id = isDone;
+  // fetch all tasks
+  res.sendStatus(201); //No Content
 });
 
 // app.get("/products", (req: Request, res: Response) => {
