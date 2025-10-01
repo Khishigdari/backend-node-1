@@ -89,7 +89,8 @@ export default function Home() {
 
   return (
     <div className="flex justify-center mt-50">
-      <div className="card p-4 border border-gray-200 shadow-gray-500 shadow-lg">
+      <div className="card p-4 shadow-gray-400 shadow-lg">
+        {/* border border-gray-200 */}
         <p className="flex justify-center font-bold ">To-Do</p>
         <div className="flex mt-4">
           <input
