@@ -16,10 +16,18 @@ export default function Home() {
   //     });
   // }, []);
 
+  // type TaskProps = {
+  //   id: string;
+  //   name: string;
+  //   isDone: boolean;
+  // };
+
   const [newTask, setNewTask] = useState("");
   const [tasks, setTasks] = useState<
     { id: string; name: string; isDone: boolean }[]
   >([]);
+  // const [tasks, setTasks] = useState<{ id: string; name: string }[]>([]);
+  // const [tasks, setTasks] = useState<TaskProps[]>([]);
 
   async function createNewTask() {
     if (newTask) {
@@ -44,8 +52,6 @@ export default function Home() {
   }
 
   async function deleteTask(id: string) {
-    // const newTodos = tasks.filter((e, i) => index !== i);
-    // setTasks(newTodos);
     if (confirm("Delete task?")) {
       await fetch(`http://localhost:3000/tasks/${id}`, {
         method: "DELETE",
@@ -68,18 +74,22 @@ export default function Home() {
     }
   }
 
-  async function checkTask(id: string, isDone: boolean) {
-    if (!isDone) {
-      await fetch(`http://localhost:3000/check/tasks/${id}`, {
-        method: "PUT",
-        // headers: {
-        //   "Content-Type": "application/json",
-        // },
-        // body: JSON.stringify({ isDone: isDone }),
-      });
-      loadTasks();
-    }
+  async function checkTask(id: string) {
+    await fetch(`http://localhost:3000/check/tasks/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ isDone: false }),
+    });
+    loadTasks();
   }
+
+  const handleKeyboardEvent = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (event.key === "Enter") {
+      createNewTask();
+    }
+  };
 
   useEffect(() => {
     loadTasks();
@@ -90,13 +100,14 @@ export default function Home() {
   return (
     <div className="flex justify-center mt-50">
       <div className="card p-4 shadow-gray-400 shadow-lg">
-        {/* border border-gray-200 */}
         <p className="flex justify-center font-bold ">To-Do</p>
         <div className="flex mt-4">
           <input
             className="input mr-4 rounded-md w-100"
             value={newTask}
             onChange={(e) => setNewTask(e.target.value)}
+            placeholder="Add tasks..."
+            onKeyDown={handleKeyboardEvent}
           />
           {/* {newTask === "" ? (
           <button className="btn btn-neutral rounded-md">Add</button>
@@ -126,10 +137,10 @@ export default function Home() {
                 <input
                   className="checkbox w-5 h-5 rounded-md"
                   type="checkbox"
-                  checked={task.isDone}
-                  onChange={() => checkTask(task.id, task.isDone)}
+                  defaultChecked={task.isDone}
+                  onClick={() => checkTask(task.id)}
                 />
-                <p>{task.name}</p>
+                <p className={task.isDone ? "line-through" : ""}>{task.name}</p>
               </div>
               <div className="flex gap-1">
                 <button
