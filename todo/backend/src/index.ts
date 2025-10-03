@@ -8,11 +8,6 @@ const app: Application = express();
 const port = 3000;
 // const cors = require("cors");
 
-// const products = [
-//   { id: 1, name: "MacBook" },
-//   { id: 1, name: "iMac" },
-// ];
-
 // let tasks = [
 //   { id: "1", name: "Task-1", isDone: "false" },
 //   { id: "2", name: "Task-2", isDone: "false" },
@@ -34,7 +29,7 @@ function getTasks() {
   return task;
 }
 
-function writeTasks(tasks: { id: string; name: string; isDone: boolean }) {
+function writeTasks(tasks: { id: string; name: string }) {
   fs.writeFile("data.txt", JSON.stringify(tasks), (err) => {
     if (err) {
       console.log(err);
@@ -43,14 +38,23 @@ function writeTasks(tasks: { id: string; name: string; isDone: boolean }) {
 }
 
 //GET
-app.get("/tasks", (req: Request, res: Response) => {
+app.get(`/tasks`, (req: Request, res: Response) => {
+  const { filterStatus } = req.query;
   const tasks = getTasks();
-  res.send(tasks);
+
+  console.log({ tasks, filterStatus });
+
+  const filteredTasks = tasks.filter((task: { isDone: boolean }) => {
+    if (filterStatus === "All") return true;
+    if (filterStatus === "Active") return !task.isDone;
+    return task.isDone;
+  });
+  res.send(filteredTasks);
 });
 // fetch all tasks
 // res.send([]);
 
-//POST
+//POST (add new task)
 app.post("/tasks", (req: Request, res: Response) => {
   // fetch all tasks
   const id = nanoid();
@@ -62,9 +66,16 @@ app.post("/tasks", (req: Request, res: Response) => {
   const tasks = getTasks();
   tasks.unshift({ id, name });
   writeTasks(tasks);
-  // writeTasks([...tasks, { isDone: false, id: nanoid(), name: newTask }]);
-  // res.send("POST tasks");
   res.status(201).send({ id });
+});
+
+//CLEAR (all completed)
+app.delete("/tasks/clear", (req: Request, res: Response) => {
+  const tasks = getTasks();
+  // fetch all tasks
+  const newTasks = tasks.filter((task: { isDone: boolean }) => !task.isDone);
+  writeTasks(newTasks);
+  res.sendStatus(204); //No Content
 });
 
 //DELETE
@@ -73,14 +84,12 @@ app.delete("/tasks/:id", (req: Request, res: Response) => {
   const tasks = getTasks();
   // fetch all tasks
   console.log({ id });
-  const newTasks = tasks.filter(
-    (task: { id: string; isDone: boolean }) => task.id !== id
-  );
+  const newTasks = tasks.filter((task: { id: string }) => task.id !== id);
   writeTasks(newTasks);
   res.sendStatus(204); //No Content
 });
 
-//PUT
+//PUT (edit)
 app.put("/tasks/:id", (req: Request, res: Response) => {
   const id = req.params.id;
   const { name } = req.body;
@@ -93,25 +102,14 @@ app.put("/tasks/:id", (req: Request, res: Response) => {
 });
 
 //PUT (checkbox)
-app.put("/check/tasks/:id", (req: Request, res: Response) => {
+app.patch("/tasks/:id/check", (req: Request, res: Response) => {
   const id = req.params.id;
-  // const { isDone } = req.body;
   const tasks = getTasks();
-  // const isDone = false;
-  // tasks.map((task: { id: string; isDone: boolean }) => {  // if (id === tasks.id) {
-  //   return { ...tasks, isDone: !tasks.isDone };
-  // }
-  // return tasks;
-  // });
-  const index = tasks.findIndex(
-    (task: { id: string; isDone: boolean }) => task.id === id
-  );
+  const index = tasks.findIndex((task: { id: string }) => task.id === id);
   tasks[index].isDone = !tasks[index].isDone;
 
   writeTasks(tasks);
-  // fetch all tasks
-  res.sendStatus(201).send({ id }); //No Content
-  // console.log({ isDone });
+  res.sendStatus(204); //No Content
 });
 
 // app.get("/products", (req: Request, res: Response) => {
